@@ -1,7 +1,51 @@
 const express = require("express");
-const app = express();
+const nodemailer = require('nodemailer');
+const cors = require('cors');
+const bodyParser = require('body-parser');
 const emotionRoute = require("./routes/emotion");
 
-app.use(express.json());
+const app = express();
+const PORT = 3000;
+
+// Middleware
+app.use(cors());
+app.use(bodyParser.json());
+
+// Emotion route
 app.use("/api/emotion", emotionRoute);
+
+// Email sending route
+app.post('/send-email', async (req, res) => {
+  const { to, subject, text } = req.body;
+
+  const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+      user: 'campusconnect1813@gmail.com', // your Gmail
+      pass: 'sxgwcvmmronvnfzp' // your Gmail App Password
+    }
+  });
+
+  const mailOptions = {
+    from: 'campusconnect1813@gmail.com',
+    to,
+    subject,
+    text
+  };
+
+  try {
+    await transporter.sendMail(mailOptions);
+    console.log(`Email sent to ${to}`);
+    res.status(200).json({ message: 'Email sent successfully' });
+  } catch (error) {
+    console.error('Error sending email:', error);
+    res.status(500).json({ error: 'Failed to send email' });
+  }
+});
+
+// Start the server
+app.listen(PORT, () => {
+  console.log(`Server running on http://localhost:${PORT}`);
+});
+
 
