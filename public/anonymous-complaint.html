@@ -3,6 +3,107 @@
 <head>
   <meta charset="UTF-8">
   <title>Complaint Form - Campus Connect</title>
+  <script type="module">
+    // Firebase imports as modules
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
+    import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+
+    // Your Firebase config (REPLACE with your actual config)
+    const firebaseConfig = {
+  apiKey: "AIzaSyBOwR4Sa2ycvqRuB0MoEmKXpYe_DAb466U",
+  authDomain: "campusconnect-a20a9.firebaseapp.com",
+  projectId: "campusconnect-a20a9",
+  storageBucket: "campusconnect-a20a9.firebasestorage.app",
+  messagingSenderId: "1021370512234",
+  appId: "1:1021370512234:web:4a91bd65e480770cc9eb13"
+};
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    // Handle form submission after user is logged in
+    window.addEventListener('DOMContentLoaded', () => {
+      const form = document.getElementById('complaint-form');
+      const dropdownBtn = document.querySelector('.dropdown-btn');
+      const dropdownContent = document.getElementById('dropdown-content');
+      const issueTypeInput = document.getElementById('issueType');
+      const otherInput = document.getElementById('otherInput');
+
+      function toggleDropdown() {
+        dropdownContent.style.display = dropdownContent.style.display === 'block' ? 'none' : 'block';
+      }
+
+      document.querySelectorAll('.dropdown-item').forEach(item => {
+        item.addEventListener('click', function () {
+          const value = this.getAttribute('data-value');
+          dropdownBtn.textContent = value;
+          issueTypeInput.value = value;
+          dropdownContent.style.display = 'none';
+          if (value === 'Other') {
+            otherInput.classList.remove('hidden');
+          } else {
+            otherInput.classList.add('hidden');
+          }
+        });
+      });
+
+      window.addEventListener('click', function (e) {
+        if (!document.getElementById('dropdown').contains(e.target)) {
+          dropdownContent.style.display = 'none';
+        }
+      });
+
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const issueType = issueTypeInput.value;
+        const otherIssue = document.querySelector('input[name="otherIssue"]').value.trim();
+        const location = document.getElementById('location').value;
+        const date = document.getElementById('date').value;
+        const description = document.getElementById('description').value;
+        const finalIssueType = issueType === 'Other' && otherIssue ? otherIssue : issueType;
+
+        const user = auth.currentUser;
+
+        if (!user) {
+          alert("You must be logged in to submit a complaint.");
+          return;
+        }
+
+        const complaint = {
+          issueType: finalIssueType,
+          location: location,
+          date: date,
+          description: description,
+          userEmail: user.email,
+          userName: user.displayName || "Anonymous",
+          userId: user.uid,
+          timestamp: serverTimestamp()
+        };
+
+        try {
+          await addDoc(collection(db, 'complaints'), complaint);
+          alert("Complaint submitted successfully!");
+          form.reset();
+          dropdownBtn.textContent = "Select issue type";
+          issueTypeInput.value = '';
+          otherInput.classList.add('hidden');
+        } catch (error) {
+          console.error("Error submitting complaint:", error);
+          alert("Failed to submit complaint. Please try again.");
+        }
+      });
+    });
+
+    // Toggle dropdown exposed globally
+    window.toggleDropdown = () => {
+      document.getElementById('dropdown-content').style.display =
+        document.getElementById('dropdown-content').style.display === 'block' ? 'none' : 'block';
+    };
+  </script>
+
   <style>
     * {
       box-sizing: border-box;
