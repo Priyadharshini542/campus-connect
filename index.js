@@ -6,6 +6,8 @@ const emotionRoute = require("./routes/emotion");
 
 const app = express();
 const PORT = 3000;
+const path = require("path");
+
 app.use(express.static(path.join(__dirname, "public")));
 
 app.use(express.json());
